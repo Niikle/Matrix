@@ -23,9 +23,10 @@ public:
 
 	bool is_one_size(const Matrix& matrix) const;
 	bool can_mult(const Matrix& matrix) const;
-	bool is_null();
-	bool is_square();
-	bool is_diagonal();
+	bool is_null() const;
+	bool is_square() const;
+	bool is_diagonal() const;
+	bool is_identity() const;
 
 	bool operator== (const Matrix& other) const;
 	bool operator!= (const Matrix& other) const;
@@ -122,7 +123,7 @@ bool Matrix<T>::can_mult(const Matrix& other) const {
 }
 
 template <typename T>
-bool Matrix<T>::is_null() {
+bool Matrix<T>::is_null() const {
 	bool flag = true;
 	for (int i = 0; i < rows; i++) {
 		for (int j = 0; j < cols; ++j) {
@@ -133,12 +134,12 @@ bool Matrix<T>::is_null() {
 }
 
 template <typename T>
-bool Matrix<T>::is_square() {
+bool Matrix<T>::is_square() const {
 	return rows == cols;
 }
 
 template<typename T>
-bool Matrix<T>::is_diagonal() {
+bool Matrix<T>::is_diagonal() const {
 	if (rows != cols) return false;
 
 	for (int i = 0; i < rows; i++){
@@ -146,6 +147,16 @@ bool Matrix<T>::is_diagonal() {
 			if (i == j) continue;
 			if (array[i][j] != NULL) return false;
 		}
+	}
+	return true;
+}
+
+template <typename T>
+bool Matrix<T>::is_identity() const {
+	if (rows != cols) return false;
+
+	for (int i = 0; i < rows; i++) {
+		if (array[i][i] != 1) return false;
 	}
 	return true;
 }
