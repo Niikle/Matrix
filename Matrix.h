@@ -18,6 +18,8 @@ public:
 	void fill();
 	void fill(int data);
 
+	void resize(int rows, int cols);
+
 	int get_rows();
 	int get_cols();
 
@@ -26,7 +28,7 @@ public:
 	bool is_null() const;
 	bool is_square() const;
 	bool is_diagonal() const;
-	bool is_identity() const;
+	bool is_singular() const;
 
 	bool operator== (const Matrix& other) const;
 	bool operator!= (const Matrix& other) const;
@@ -112,6 +114,12 @@ void Matrix<T>::fill(int data) {
 }
 
 template <typename T>
+void Matrix<T>::resize(int rows, int cols) {
+	del();
+	create(rows, cols);
+}
+
+template <typename T>
 bool Matrix<T>::is_one_size(const Matrix& other) const {
 	return this->rows == other.rows &&
 		this->cols == other.cols;
@@ -152,7 +160,7 @@ bool Matrix<T>::is_diagonal() const {
 }
 
 template <typename T>
-bool Matrix<T>::is_identity() const {
+bool Matrix<T>::is_singular() const {
 	if (rows != cols) return false;
 
 	for (int i = 0; i < rows; i++) {
