@@ -25,6 +25,7 @@ public:
 	bool can_mult(const Matrix& matrix) const;
 	bool is_null();
 	bool is_square();
+	bool is_diagonal();
 
 	bool operator== (const Matrix& other) const;
 	bool operator!= (const Matrix& other) const;
@@ -134,6 +135,19 @@ bool Matrix<T>::is_null() {
 template <typename T>
 bool Matrix<T>::is_square() {
 	return rows == cols;
+}
+
+template<typename T>
+bool Matrix<T>::is_diagonal() {
+	if (rows != cols) return false;
+
+	for (int i = 0; i < rows; i++){
+		for (int j = 0; j < cols; j++){
+			if (i == j) continue;
+			if (array[i][j] != NULL) return false;
+		}
+	}
+	return true;
 }
 
 template <typename T>
