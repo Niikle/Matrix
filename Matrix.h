@@ -29,6 +29,7 @@ public:
 	bool is_square() const;
 	bool is_diagonal() const;
 	bool is_singular() const;
+	bool is_symmetric() const;
 
 	bool operator== (const Matrix& other) const;
 	bool operator!= (const Matrix& other) const;
@@ -38,6 +39,9 @@ public:
 	Matrix<T> operator*(const int data) const;
 	Matrix<T> operator*(const Matrix& other) const;
 	Matrix<T>& operator=(const Matrix& other);
+
+	T& at(int rows, int cols);
+	T get(int rows, int cols);
 
 };
 
@@ -170,6 +174,19 @@ bool Matrix<T>::is_singular() const {
 }
 
 template <typename T>
+bool Matrix<T>::is_symmetric() const {
+	if (rows != cols) return false;
+
+	for (int i = 0; i < rows; i++) {
+		for (int j = 0; j < cols; j++) {
+			if (i == j) continue;
+			if (array[i][j] != array[j][i]) return false;
+		}
+	}
+	return true;
+}
+
+template <typename T>
 bool Matrix<T>::operator==(const Matrix& other) const {
 	if (!is_one_size(other)) return false;
 	bool flag = true;
@@ -191,7 +208,7 @@ bool Matrix<T>::operator!= (const Matrix& other) const {
 	}
 	return false;
 }
-
+.
 template <typename T>
 Matrix<T> Matrix<T>::operator+(const Matrix& other) const {
 	Matrix matrix(rows, cols);
@@ -254,4 +271,16 @@ Matrix<T>& Matrix<T>::operator=(const Matrix& other){
 			this->array[i][j] = other.array[i][j];
 		}
 	}
+}
+
+template <typename T>
+T& Matrix<T>::at(int rows, int cols) {
+	if (this->rows > rows && this->cols > cols) return array[rows][cols];
+	else throw std::invalid_argument("out of the range");
+}
+
+template <typename T>
+T Matrix<T>::get(int rows, int cols) {
+	if (this->rows > rows && this->cols > cols) return array[rows][cols];
+	else throw std::invalid_argument("out of the range");
 }
