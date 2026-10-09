@@ -2,7 +2,7 @@
 template <typename T>
 class Matrix{
 private:
-	T** array;
+	T** array = nullptr;
 	int rows, cols;
 
 private:
@@ -20,8 +20,8 @@ public:
 
 	void resize(int rows, int cols);
 
-	int get_rows();
-	int get_cols();
+	int get_rows() const;
+	int get_cols() const;
 
 	bool is_one_size(const Matrix& matrix) const;
 	bool can_mult(const Matrix& matrix) const;
@@ -43,6 +43,8 @@ public:
 	T& at(int rows, int cols);
 	T get(int rows, int cols);
 
+	Matrix& transposition();
+
 };
 
 template <typename T>
@@ -51,8 +53,13 @@ Matrix<T>::Matrix(int rows, int cols) : rows(rows), cols(cols) {
 }
 
 template <typename T>
-Matrix<T>::Matrix(const Matrix& other) {
+Matrix<T>::Matrix(const Matrix& other): rows(rows), cols(cols), array(nullptr) {
 	create(other.rows, other.cols);
+	for (int i = 0; i < other.rows; i++){
+		for (int j = 0; j < other.cols; ++j) {
+			this->array[i][j] = other.array[i][j];
+		}
+	}
 }
 
 template <typename T>
@@ -64,27 +71,29 @@ template <typename T>
 void Matrix<T>::create(int rows, int cols){
 	this->rows = rows;
 	this->cols = cols;
-	array = new int* [rows];
+	array = new T* [rows];
 	for (int i = 0; i < rows; i++)
 	{
-		array[i] = new int[cols];
+		array[i] = new T[cols];
 	}
 }
 
 template <typename T>
 void Matrix<T>::del(){
+	if (array == nullptr) return;
 	for (int i = 0; i < rows; i++)
 	{
 		delete[](array[i]);
 	}
 	delete[](array);
+	array = nullptr;
 }
 
 template <typename T>
-int Matrix<T>::get_rows() { return rows; }
+int Matrix<T>::get_rows() const { return rows; }
 
 template <typename T>
-int Matrix<T>::get_cols() { return cols; }
+int Matrix<T>::get_cols() const  { return cols; }
 
 template <typename T>
 void Matrix<T>::show() {
@@ -100,7 +109,6 @@ void Matrix<T>::show() {
 
 template <typename T>
 void Matrix<T>::fill() {
-	srand(time(0));
 	for (int i = 0; i < rows; i++) {
 		for (int j = 0; j < cols; ++j) {
 			array[i][j] = rand() % 10;
@@ -131,7 +139,7 @@ bool Matrix<T>::is_one_size(const Matrix& other) const {
 
 template <typename T>
 bool Matrix<T>::can_mult(const Matrix& other) const {
-	return this->rows == other.cols && this->cols == other.rows;
+	return this->cols == other.rows;
 }
 
 template <typename T>
@@ -139,7 +147,7 @@ bool Matrix<T>::is_null() const {
 	bool flag = true;
 	for (int i = 0; i < rows; i++) {
 		for (int j = 0; j < cols; ++j) {
-			if (array[i][j] != NULL) return false;
+			if (array[i][j] != (T)NULL) return false;
 		}
 	}
 	return true;
@@ -208,7 +216,7 @@ bool Matrix<T>::operator!= (const Matrix& other) const {
 	}
 	return false;
 }
-.
+
 template <typename T>
 Matrix<T> Matrix<T>::operator+(const Matrix& other) const {
 	Matrix matrix(rows, cols);
@@ -245,9 +253,9 @@ Matrix<T> Matrix<T>::operator*(const int data) const {
 template <typename T>
 Matrix<T> Matrix<T>::operator*(const Matrix& other) const {
 	if (!can_mult(other)) { throw std::invalid_argument("cannot mult"); }
-	Matrix matrix(rows, cols);
-	for (int i = 0; i < rows; i++) {
-		for (int j = 0; j < cols; ++j) {
+	Matrix matrix(this->rows, other.cols);
+	for (int i = 0; i < this->rows; i++) {
+		for (int j = 0; j < other.cols; ++j) {
 			matrix.array[i][j] = 0;
 			for (int k = 0; k < cols; k++)
 			{
@@ -260,17 +268,15 @@ Matrix<T> Matrix<T>::operator*(const Matrix& other) const {
 
 template <typename T>
 Matrix<T>& Matrix<T>::operator=(const Matrix& other){
-	if (this == &other) throw std::invalid_argument("self‑assignment");
+	if (this == &other) { return *this; }
 
-	del();
-	create(other.rows, other.cols);
+	Matrix temp(other);
 
-	for (int i = 0; i < rows; i++)
-	{
-		for (int j = 0; j < cols; ++j) {
-			this->array[i][j] = other.array[i][j];
-		}
-	}
+	std::swap(this->rows, temp.rows);
+	std::swap(this->cols, temp.cols);
+	std::swap(this->array, temp.array);
+
+	return *this;
 }
 
 template <typename T>
@@ -283,4 +289,23 @@ template <typename T>
 T Matrix<T>::get(int rows, int cols) {
 	if (this->rows > rows && this->cols > cols) return array[rows][cols];
 	else throw std::invalid_argument("out of the range");
+}
+
+template <typename T>
+Matrix<T>& Matrix<T>::transposition() {
+	Matrix temp(cols, rows);
+
+	for (int i = 0; i < rows; i++)
+	{
+		for (int j = 0; j < cols; j++)
+		{
+			temp.array[j][i] = this->array[i][j];
+		}
+	}
+
+	std::swap(this->rows, temp.rows);
+	std::swap(this->cols, temp.cols);
+	std::swap(this->array, temp.array);
+
+	return *this;
 }
