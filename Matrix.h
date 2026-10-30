@@ -11,39 +11,40 @@ private:
 
 public:
 	Matrix(int rows, int cols);
-	Matrix(const Matrix& other);
+	Matrix(const Matrix<T>& other);
 	~Matrix();
 
 	void show();
 	void fill();
 	void fill(int data);
+	void swap(Matrix<T>& other);
 
 	void resize(int rows, int cols);
 
 	int get_rows() const;
 	int get_cols() const;
 
-	bool is_one_size(const Matrix& matrix) const;
-	bool can_mult(const Matrix& matrix) const;
+	bool is_one_size(const Matrix<T>& matrix) const;
+	bool can_mult(const Matrix<T>& matrix) const;
 	bool is_null() const;
 	bool is_square() const;
 	bool is_diagonal() const;
-	bool is_singular() const;
+	bool is_identity() const;
 	bool is_symmetric() const;
 
-	bool operator== (const Matrix& other) const;
-	bool operator!= (const Matrix& other) const;
+	bool operator== (const Matrix<T>& other) const;
+	bool operator!= (const Matrix<T>& other) const;
 
-	Matrix<T> operator+(const Matrix& other) const;
-	Matrix<T> operator-(const Matrix& other) const;
+	Matrix<T> operator+(const Matrix<T>& other) const;
+	Matrix<T> operator-(const Matrix<T>& other) const;
 	Matrix<T> operator*(const int data) const;
-	Matrix<T> operator*(const Matrix& other) const;
-	Matrix<T>& operator=(const Matrix& other);
+	Matrix<T> operator*(const Matrix<T>& other) const;
+	Matrix<T>& operator=(const Matrix<T>& other);
 
 	T& at(int rows, int cols);
-	T get(int rows, int cols);
+	T get(int rows, int cols) const;
 
-	Matrix& transposition();
+	Matrix<T>& transposition();
 
 };
 
@@ -53,7 +54,7 @@ Matrix<T>::Matrix(int rows, int cols) : rows(rows), cols(cols) {
 }
 
 template <typename T>
-Matrix<T>::Matrix(const Matrix& other): rows(rows), cols(cols), array(nullptr) {
+Matrix<T>::Matrix(const Matrix<T>& other): rows(other.rows), cols(other.cols), array(nullptr) {
 	create(other.rows, other.cols);
 	for (int i = 0; i < other.rows; i++){
 		for (int j = 0; j < other.cols; ++j) {
@@ -126,19 +127,35 @@ void Matrix<T>::fill(int data) {
 }
 
 template <typename T>
-void Matrix<T>::resize(int rows, int cols) {
-	del();
-	create(rows, cols);
+void Matrix<T>::swap(Matrix<T>& other){
+	std::swap(this->rows, other.rows);
+	std::swap(this->cols, other.cols);
+	std::swap(this->array, other.array);
 }
 
 template <typename T>
-bool Matrix<T>::is_one_size(const Matrix& other) const {
+void Matrix<T>::resize(int new_rows, int new_cols) {
+	Matrix<T> temp(new_rows, new_cols);
+	
+	int min_row = std::min(this->rows, new_rows);
+	int min_col = std::min(this->cols, new_cols);
+	
+	for (int i = 0; i < min_row; i++) {
+		for (int j = 0; j < min_col; j++) {
+			temp.array[i][j] = this->array[i][j];
+		}
+	}
+	this->swap(temp);
+}
+
+template <typename T>
+bool Matrix<T>::is_one_size(const Matrix<T>& other) const {
 	return this->rows == other.rows &&
 		this->cols == other.cols;
 }
 
 template <typename T>
-bool Matrix<T>::can_mult(const Matrix& other) const {
+bool Matrix<T>::can_mult(const Matrix<T>& other) const {
 	return this->cols == other.rows;
 }
 
@@ -147,7 +164,7 @@ bool Matrix<T>::is_null() const {
 	bool flag = true;
 	for (int i = 0; i < rows; i++) {
 		for (int j = 0; j < cols; ++j) {
-			if (array[i][j] != (T)NULL) return false;
+			if (array[i][j] != T{}) return false;
 		}
 	}
 	return true;
@@ -165,37 +182,48 @@ bool Matrix<T>::is_diagonal() const {
 	for (int i = 0; i < rows; i++){
 		for (int j = 0; j < cols; j++){
 			if (i == j) continue;
-			if (array[i][j] != NULL) return false;
+			if (array[i][j] != T{}) return false;
 		}
 	}
 	return true;
 }
 
 template <typename T>
-bool Matrix<T>::is_singular() const {
-	if (rows != cols) return false;
+bool Matrix<T>::is_identity() const {
+    if (rows != cols) return false;
 
-	for (int i = 0; i < rows; i++) {
-		if (array[i][i] != 1) return false;
-	}
-	return true;
+    for (int i = 0; i < rows; i++) {
+        // diagonal elements
+        if (array[i][i] != (T)1) return false;
+
+        // left
+        for (int j = 0; j < i; j++) {
+            if (array[i][j] != T{}) return false;
+        }
+
+        // right
+        for (int j = i + 1; j < cols; j++) {
+            if (array[i][j] != T{}) return false;
+        }
+    }
+    return true;
 }
 
 template <typename T>
 bool Matrix<T>::is_symmetric() const {
-	if (rows != cols) return false;
+    if (rows != cols) return false;
 
-	for (int i = 0; i < rows; i++) {
-		for (int j = 0; j < cols; j++) {
-			if (i == j) continue;
-			if (array[i][j] != array[j][i]) return false;
-		}
-	}
-	return true;
+    for (int i = 0; i < rows; i++) {
+        for (int j = i + 1; j < cols; j++) { // begin since i + 1
+            if (array[i][j] != array[j][i]) return false;
+        }
+    }
+    return true;
 }
 
+
 template <typename T>
-bool Matrix<T>::operator==(const Matrix& other) const {
+bool Matrix<T>::operator==(const Matrix<T>& other) const {
 	if (!is_one_size(other)) return false;
 	bool flag = true;
 	for (int i = 0; i < rows; i++) {
@@ -207,7 +235,7 @@ bool Matrix<T>::operator==(const Matrix& other) const {
 }
 
 template <typename T>
-bool Matrix<T>::operator!= (const Matrix& other) const {
+bool Matrix<T>::operator!= (const Matrix<T>& other) const {
 	if (!is_one_size(other)) return true;
 	for (int i = 0; i < rows; i++) {
 		for (int j = 0; j < cols; ++j) {
@@ -218,8 +246,9 @@ bool Matrix<T>::operator!= (const Matrix& other) const {
 }
 
 template <typename T>
-Matrix<T> Matrix<T>::operator+(const Matrix& other) const {
-	Matrix matrix(rows, cols);
+Matrix<T> Matrix<T>::operator+(const Matrix<T>& other) const {
+	if(!is_one_size(other)) throw std::invalid_argument("out of the range");
+	Matrix<T> matrix(rows, cols);
 	for (int i = 0; i < rows; ++i) {
 		for (int j = 0; j < cols; ++j) {
 			matrix.array[i][j] = this->array[i][j] + other.array[i][j];
@@ -229,8 +258,9 @@ Matrix<T> Matrix<T>::operator+(const Matrix& other) const {
 }
 
 template <typename T>
-Matrix<T> Matrix<T>::operator-(const Matrix& other) const {
-	Matrix matrix(rows, cols);
+Matrix<T> Matrix<T>::operator-(const Matrix<T>& other) const {
+	if(!is_one_size(other)) throw std::invalid_argument("out of the range");
+	Matrix<T> matrix(rows, cols);
 	for (int i = 0; i < rows; i++) {
 		for (int j = 0; j < cols; ++j) {
 			matrix.array[i][j] = this->array[i][j] - other.array[i][j];
@@ -241,7 +271,7 @@ Matrix<T> Matrix<T>::operator-(const Matrix& other) const {
 
 template <typename T>
 Matrix<T> Matrix<T>::operator*(const int data) const {
-	Matrix matrix(rows, cols);
+	Matrix<T> matrix(rows, cols);
 	for (int i = 0; i < rows; i++) {
 		for (int j = 0; j < cols; ++j) {
 			matrix.array[i][j] = this->array[i][j] * data;
@@ -251,12 +281,12 @@ Matrix<T> Matrix<T>::operator*(const int data) const {
 }
 
 template <typename T>
-Matrix<T> Matrix<T>::operator*(const Matrix& other) const {
+Matrix<T> Matrix<T>::operator*(const Matrix<T>& other) const{
 	if (!can_mult(other)) { throw std::invalid_argument("cannot mult"); }
 	Matrix matrix(this->rows, other.cols);
 	for (int i = 0; i < this->rows; i++) {
 		for (int j = 0; j < other.cols; ++j) {
-			matrix.array[i][j] = 0;
+			matrix.array[i][j] = T{};
 			for (int k = 0; k < cols; k++)
 			{
 				matrix.array[i][j] += this->array[i][k] * other.array[k][j];
@@ -267,33 +297,30 @@ Matrix<T> Matrix<T>::operator*(const Matrix& other) const {
 }
 
 template <typename T>
-Matrix<T>& Matrix<T>::operator=(const Matrix& other){
+Matrix<T>& Matrix<T>::operator=(const Matrix<T>& other){
 	if (this == &other) { return *this; }
 
-	Matrix temp(other);
-
-	std::swap(this->rows, temp.rows);
-	std::swap(this->cols, temp.cols);
-	std::swap(this->array, temp.array);
+	Matrix<T> temp(other);
+	swap(temp);
 
 	return *this;
 }
 
 template <typename T>
 T& Matrix<T>::at(int rows, int cols) {
-	if (this->rows > rows && this->cols > cols) return array[rows][cols];
-	else throw std::invalid_argument("out of the range");
+	if (this->rows > rows && this->cols > cols && rows >= 0 && cols >= 0) return array[rows][cols];
+	else throw std::out_of_range("out of the range");
 }
 
 template <typename T>
-T Matrix<T>::get(int rows, int cols) {
-	if (this->rows > rows && this->cols > cols) return array[rows][cols];
-	else throw std::invalid_argument("out of the range");
+T Matrix<T>::get(int rows, int cols) const {
+	if (this->rows > rows && this->cols > cols && rows >= 0 && cols >= 0) return array[rows][cols];
+	else throw std::out_of_range("out of the range");
 }
 
 template <typename T>
 Matrix<T>& Matrix<T>::transposition() {
-	Matrix temp(cols, rows);
+	Matrix<T> temp(cols, rows);
 
 	for (int i = 0; i < rows; i++)
 	{
@@ -302,10 +329,7 @@ Matrix<T>& Matrix<T>::transposition() {
 			temp.array[j][i] = this->array[i][j];
 		}
 	}
-
-	std::swap(this->rows, temp.rows);
-	std::swap(this->cols, temp.cols);
-	std::swap(this->array, temp.array);
+	swap(temp);
 
 	return *this;
 }
